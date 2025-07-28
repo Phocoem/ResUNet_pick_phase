@@ -160,6 +160,45 @@ def plot_waveform(data, pred, fname, label=None,
                   figure_dir="./", dt=0.01):
 
     t = np.arange(0, pred.shape[0]) * dt
+    # --- CẮT WINDOW quanh P pick hoặc predicted P ---
+    center_idx = None
+    if (itp_pred is not None) and len(itp_pred) > 0:
+        center_idx = itp_pred[0]
+    elif (itp is not None) and len(itp) > 0:
+        center_idx = itp[0]
+
+    if center_idx is not None:
+        pre_sec = 2  # bạn chỉnh giá trị này
+        post_sec = 5
+        pre_samples = int(pre_sec / dt)
+        post_samples = int(post_sec / dt)
+        start = max(0, center_idx - pre_samples)
+        end = min(pred.shape[0], center_idx + post_samples)
+
+        # Cắt tất cả mảng theo window này
+        t = t[start:end]
+        data = data[start:end, :, :]
+        pred = pred[start:end, :, :]
+        if label is not None:
+            label = label[start:end, :, :]
+
+        # Cập nhật chỉ số pick sau khi cắt
+        def adjust_idx(pick_list):
+            return [p - start for p in pick_list if p >= start and p < end]
+
+        if itp is not None:
+            itp = adjust_idx(itp)
+        if its is not None:
+            its = adjust_idx(its)
+        if itps is not None:
+            itps = adjust_idx(itps)
+        if itp_pred is not None:
+            itp_pred = adjust_idx(itp_pred)
+        if its_pred is not None:
+            its_pred = adjust_idx(its_pred)
+        if itps_pred is not None:
+            itps_pred = adjust_idx(itps_pred)
+
     box = dict(boxstyle='round', facecolor='white', alpha=1)
     text_loc = [0.05, 0.77]
 

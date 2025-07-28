@@ -37,16 +37,80 @@ def read_args():
     parser.add_argument("--format", default="numpy", help="Input data format")
     parser.add_argument("--train_dir", default="./data/train/", help="Input file directory")
     parser.add_argument("--train_list", default="./data/train.csv", help="Input csv file")
-    parser.add_argument("--valid_dir", default="./data/valid/", help="Input file directory")
-    parser.add_argument("--valid_list", default="./data/valid.csv", help="Input csv file")
-    parser.add_argument("--test_dir", default="./data/test", help="Input file directory")
-    parser.add_argument("--test_list", default="./data/test.csv", help="Input csv file")
+    parser.add_argument("--valid_dir", default=None, help="Input file directory")
+    parser.add_argument("--valid_list", default=None, help="Input csv file")
+    parser.add_argument("--test_dir", default=None, help="Input file directory")
+    parser.add_argument("--test_list", default=None, help="Input csv file")
     parser.add_argument("--result_dir", default="results", help="result directory")
     parser.add_argument("--plot_figure", action="store_true", help="If plot figure for test")
     parser.add_argument("--save_prob", action="store_true", help="If save result for test")
     args = parser.parse_args()
 
     return args
+from tqdm import tqdm
+import os
+import shutil
+import random
+
+def auto_split_data(args):
+    input_dir = args.train_dir.rstrip("/\\")
+    parent_dir = os.path.dirname(input_dir)
+    base_name = os.path.basename(input_dir)
+
+    if base_name in ['train', 'valid', 'test']:
+        print("⚠️  Dữ liệu đầu vào đã nằm trong thư mục chia nhỏ (train/valid/test). Bỏ qua chia.")
+        return args
+
+    output_base = parent_dir
+    output_train = os.path.join(output_base, "train")
+    output_valid = os.path.join(output_base, "valid")
+    output_test = os.path.join(output_base, "test")
+
+    os.makedirs(output_train, exist_ok=True)
+    os.makedirs(output_valid, exist_ok=True)
+    os.makedirs(output_test, exist_ok=True)
+
+    all_files = [f for f in os.listdir(input_dir) if f.endswith(".npz")]
+    random.seed(42)
+    random.shuffle(all_files)
+
+    n_total = len(all_files)
+    n_train = int(0.8 * n_total)
+    n_valid = int(0.1 * n_total)
+    n_test = n_total - n_train - n_valid
+
+    splits = {
+        "train": (output_train, all_files[:n_train]),
+        "valid": (output_valid, all_files[n_train:n_train + n_valid]),
+        "test": (output_test, all_files[n_train + n_valid:])
+    }
+
+    for split_name, (out_dir, file_list) in splits.items():
+        print(f"📂 Đang xử lý {split_name} ({len(file_list)} file)...")
+        os.makedirs(out_dir, exist_ok=True)
+        csv_path = os.path.join(output_base, f"{split_name}.csv")
+        with open(csv_path, "w") as f_csv:
+            f_csv.write("fname\n")
+            for fname in tqdm(file_list, desc=f"🔄 Copying to {split_name}", ncols=80):
+                src = os.path.join(input_dir, fname)
+                dst = os.path.join(out_dir, fname)
+                if os.path.abspath(src) != os.path.abspath(dst):
+                    shutil.copy(src, dst)
+                f_csv.write(f"{fname}\n")
+
+    # Cập nhật lại args
+    args.train_dir = output_train
+    args.train_list = os.path.join(output_base, "train.csv")
+    args.valid_dir = output_valid
+    args.valid_list = os.path.join(output_base, "valid.csv")
+    args.test_dir = output_test
+    args.test_list = os.path.join(output_base, "test.csv")
+
+    print(f"\n✅ Đã chia xong {n_total} file:")
+    print(f"   ➤ Train: {n_train}, Valid: {n_valid}, Test: {n_test}")
+    return args
+
+
 
 
 def train_fn(args, data_reader, data_reader_valid):
@@ -216,6 +280,7 @@ def main(args):
 
     logging.basicConfig(format='%(asctime)s %(message)s', level=logging.INFO)
     coord = tf.train.Coordinator()
+    args = auto_split_data(args)
 
     if (args.mode == "train") or (args.mode == "train_valid"):
         with tf.compat.v1.name_scope('create_inputs'):
@@ -247,4 +312,5 @@ def main(args):
 
 if __name__ == '__main__':
     args = read_args()
+    args = auto_split_data(args)
     main(args)
