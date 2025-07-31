@@ -59,7 +59,7 @@ def normalize(data, axis=(0,)):
     return data
 
 
-def normalize_long(data, axis=(0,), window=12000):
+def normalize_long(data, axis=(0,), window=6000):
     """
     data: nt, nch
     """
@@ -102,7 +102,7 @@ def normalize_long(data, axis=(0,), window=12000):
     return data
 
 
-def normalize_batch(data, window=12000):
+def normalize_batch(data, window=6000):
     """
     data: nsta, nt, nch
     """
@@ -152,8 +152,8 @@ class DataConfig:
     n_class = 3
     sampling_rate = 100
     dt = 1.0 / sampling_rate
-    X_shape = [12000, 1, n_channel]
-    Y_shape = [12000, 1, n_class]
+    X_shape = [6000, 1, n_channel]
+    Y_shape = [6000, 1, n_class]
     min_event_gap = 3 * sampling_rate
     label_shape = "gaussian"
     label_width = 30

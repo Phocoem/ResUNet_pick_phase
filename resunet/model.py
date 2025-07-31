@@ -24,9 +24,9 @@ class ModelConfig:
   drop_rate = 0.0
   summary = True
   
-  X_shape = [12000, 1, 3]
+  X_shape = [6000, 1, 3]
   n_channel = X_shape[-1]
-  Y_shape = [12000, 1, 3]
+  Y_shape = [6000, 1, 3]
   n_class = Y_shape[-1]
 
   def __init__(self, **kwargs):

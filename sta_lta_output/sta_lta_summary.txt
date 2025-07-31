@@ -1,0 +1,16 @@
+P_Total_TP: 536
+P_Total_FP: 2390
+P_Total_FN: 464
+P_Precision: 0.1832
+P_Recall: 0.536
+P_F1: 0.2731
+P_MAE_Avg: 0.0402
+P_MAD_Avg: 0.0402
+S_Total_TP: 29
+S_Total_FP: 2897
+S_Total_FN: 971
+S_Precision: 0.0099
+S_Recall: 0.029
+S_F1: 0.0148
+S_MAE_Avg: 0.0555
+S_MAD_Avg: 0.0555
